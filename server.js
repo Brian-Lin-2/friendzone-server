@@ -12,6 +12,9 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// Set up passport-jwt. We will be using jwt tokens for user auth.
+require("./misc/passportSetup");
+
 // Routes.
 app.use("/user", userRoute);
 
