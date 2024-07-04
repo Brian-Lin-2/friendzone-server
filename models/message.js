@@ -10,7 +10,7 @@ const MessageSchema = new Schema({
   timestamp: "ISODate('2023-01-01T00:00:00Z')",
 });
 
-User.virtual("url").get(function () {
+MessageSchema.virtual("url").get(function () {
   return `/user/${this._id}`;
 });
 
