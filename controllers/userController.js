@@ -128,10 +128,67 @@ exports.user_signup = [
   },
 ];
 
-exports.account_update = (req, res) => {
-  res.send("update user");
-};
+exports.change_password = asyncHandler(async (req, res) => {
+  // User must enter correct password before being able to update.
+  const match = await bcrypt.compare(req.body.password, req.user.password);
 
-exports.account_delete = (req, res) => {
-  res.send("delete user");
-};
+  if (!match) {
+    res.status(400).json({
+      status: "failure",
+      message: "invalid password",
+    });
+    return;
+  }
+
+  bcrypt.hash(req.body.new_password, 10, async (err, encrypted_password) => {
+    if (err) {
+      res.status(400).json({
+        status: "failure",
+        message: "unable to encrypt password",
+      });
+      return;
+    }
+
+    const updated_user = new User({
+      password: encrypted_password,
+      _id: req.user._id,
+    });
+
+    const user = await User.findByIdAndUpdate(req.user._id, updated_user, {
+      new: true,
+    });
+
+    res.status(200).json({
+      status: "success",
+      user: user,
+    });
+  });
+});
+
+exports.account_update = asyncHandler(async (req, res) => {
+  const updated_user = new User({
+    username: req.body.username,
+    first_name: req.body.first_name,
+    last_name: req.body.last_name,
+    _id: req.user._id,
+  });
+
+  const user = await User.findByIdAndUpdate(req.user._id, updated_user, {
+    new: true,
+  });
+  res.status(200).json({
+    status: "success",
+    message: "user successfully updated",
+    user: user,
+  });
+});
+
+exports.account_delete = asyncHandler(async (req, res) => {
+  const deleted_user = await User.findByIdAndDelete(req.user._id);
+
+  res.status(200).json({
+    status: "success",
+    message: "user successfully deleted",
+    deleted_user: deleted_user,
+  });
+});

@@ -9,6 +9,8 @@ router.post("/signup", userController.user_signup);
 
 router.put("/", util.userAuth, userController.account_update);
 
+router.put("/change-password", util.userAuth, userController.change_password);
+
 router.delete("/", util.userAuth, userController.account_delete);
 
 module.exports = router;
