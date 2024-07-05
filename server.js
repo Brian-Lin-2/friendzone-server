@@ -6,6 +6,7 @@ require("dotenv").config();
 const app = express();
 
 const userRoute = require("./routes/userRoute");
+const messageRoute = require("./routes/messageRoute");
 
 // Middleware.
 app.use(cors());
@@ -17,6 +18,7 @@ require("./misc/passportSetup");
 
 // Routes.
 app.use("/user", userRoute);
+app.use("/message", messageRoute);
 
 async function startDatabase() {
   await mongoose.connect(process.env.MONGO_URL);

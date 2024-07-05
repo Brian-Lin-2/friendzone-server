@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const messageController = require("../controllers/messageController");
 
-router.get("/history", messageController.get_message_history);
+router.get("/all/:friendId", messageController.get_message_history);
 
 router.post("/", messageController.send_message);
 
