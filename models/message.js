@@ -7,11 +7,11 @@ const MessageSchema = new Schema({
   to: { type: Schema.Types.ObjectId, ref: "User" },
   text: { type: String, required: true },
   // ISODate ensures the date is always in an appropriate format.
-  timestamp: "ISODate('2023-01-01T00:00:00Z')",
+  timestamp: { type: Date, default: Date.now },
 });
 
 MessageSchema.virtual("url").get(function () {
   return `/user/${this._id}`;
 });
 
-exports.module = mongoose.model("message", MessageSchema);
+module.exports = mongoose.model("message", MessageSchema);
