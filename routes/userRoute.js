@@ -28,4 +28,6 @@ router.put("/change-password", userAuth, userController.change_password);
 
 router.delete("/", userAuth, userController.account_delete);
 
+router.delete("/friend/:friendId", userAuth, userController.remove_friend);
+
 module.exports = router;

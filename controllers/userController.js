@@ -261,6 +261,23 @@ exports.accept_friend_request = asyncHandler(async (req, res) => {
   });
 });
 
+exports.remove_friend = asyncHandler(async (req, res) => {
+  const friendId = req.params.friendId;
+
+  await User.findByIdAndUpdate(req.user.id, {
+    $pull: { friends: friendId },
+  });
+
+  await User.findByIdAndUpdate(friendId, {
+    $pull: { friends: req.user.id },
+  });
+
+  res.status(200).json({
+    status: "received",
+    message: "friend removed",
+  });
+});
+
 exports.get_user = asyncHandler(async (req, res) => {
   const user = await User.findById(req.params.id);
 
