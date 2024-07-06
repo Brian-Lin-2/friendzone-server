@@ -1,18 +1,19 @@
-exports.isLoggedIn = (req, res, next, err) => {
-  if (err) {
-    res.json.status(400).json({
-      status: "failure",
-      message: "an error occured",
-    });
-  }
+const passport = require("passport");
 
-  if (req.user) {
-    res.json.status(403).json({
-      status: "failure",
-      message: "already logged in",
-    });
-  }
+exports.isLoggedIn = (req, res, next) => {
+  passport.authenticate("jwt", { session: false }, (err, user) => {
+    if (err) {
+      return next(err);
+    }
 
-  // User is not logged in, we call the next middleware.
-  next();
+    if (user) {
+      // If user is authenticated, restrict access to the login route
+      return res.status(403).json({
+        status: "failure",
+        message: "User already logged in.",
+      });
+    }
+    // If user is not authenticated, proceed to the next middleware
+    next();
+  })(req, res, next);
 };
