@@ -15,7 +15,7 @@ passport.use(
       const user = await User.findById(payload.id);
 
       if (user) {
-        console.log("JWT Strategy set up.");
+        console.log(`${user.id} logged in`);
         done(null, user);
       } else {
         done(null, false);

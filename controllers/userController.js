@@ -18,7 +18,9 @@ exports.user_login = [
   asyncHandler(async (req, res) => {
     validate(req);
 
-    const user = await User.findOne({ username: req.body.username });
+    const user = await User.findOne({ username: req.body.username })
+      .populate("friends")
+      .exec();
 
     if (!user) {
       res.status(400).json({
@@ -90,20 +92,19 @@ exports.user_signup = [
           });
           return;
         } else {
-          const new_user = new User({
+          const user = new User({
             username: req.body.username,
             password: encrypted_password,
             first_name: req.body.first_name.toLowerCase(),
             last_name: req.body.last_name.toLowerCase(),
-            friends: [],
           });
 
-          await new_user.save();
+          const new_user = await user.save();
 
           res.status(201).json({
             status: "sucesss",
             user: "user created!",
-            user: new_user,
+            new_user: new_user,
           });
         }
       })
@@ -201,5 +202,71 @@ exports.account_delete = asyncHandler(async (req, res) => {
     status: "success",
     message: "user successfully deleted",
     deleted_user: deleted_user,
+  });
+});
+
+exports.send_friend_request = asyncHandler(async (req, res) => {
+  // Make sure request hasn't already been sent.
+  const user = await User.findById(req.params.friendId);
+
+  if (user.pending_requests.includes(req.user.id)) {
+    res.status(400).json({
+      status: "failure",
+      message: "request already sent",
+    });
+
+    return;
+  }
+
+  await User.findByIdAndUpdate(
+    req.params.friendId,
+    {
+      $push: { pending_requests: req.user.id },
+    },
+    { new: true }
+  );
+
+  res.status(200).json({
+    status: "success",
+    message: "request sent",
+  });
+});
+
+exports.accept_friend_request = asyncHandler(async (req, res) => {
+  const friendId = req.params.friendId;
+
+  if (!req.user.pending_requests.includes(friendId)) {
+    res.status(400).json({
+      status: "failure",
+      message: "request doesn't exist",
+    });
+
+    return;
+  }
+
+  // Add user to friend list and remove from friend requests list.
+  await User.findByIdAndUpdate(req.user.id, {
+    $pull: { pending_requests: friendId },
+    $push: { friends: friendId },
+  });
+
+  // Also add user to the friend's friend list.
+  await User.findByIdAndUpdate(friendId, {
+    $push: { friends: req.user.id },
+  });
+
+  res.status(200).json({
+    status: "success",
+    message: "friend added",
+  });
+});
+
+exports.get_user = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.params.id);
+
+  res.status(200).json({
+    status: "success",
+    message: "info retrieved",
+    user: user,
   });
 });
