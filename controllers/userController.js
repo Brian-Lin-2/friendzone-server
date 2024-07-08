@@ -16,7 +16,9 @@ exports.user_login = [
     .isLength({ min: 1 })
     .escape(),
   asyncHandler(async (req, res) => {
-    validate(req);
+    if (!validate(req, res)) {
+      return;
+    }
 
     const user = await User.findOne({ username: req.body.username })
       .populate("friends")
@@ -78,7 +80,9 @@ exports.user_signup = [
     .isLength({ max: 20 })
     .withMessage("Last name must be less than 20 characters"),
   (req, res) => {
-    validate(req);
+    if (!validate(req, res)) {
+      return;
+    }
 
     bcrypt.hash(
       req.body.password,
@@ -118,7 +122,9 @@ exports.change_password = [
     .isLength({ min: 1 })
     .escape(),
   asyncHandler(async (req, res) => {
-    validate(req);
+    if (!validate(req, res)) {
+      return;
+    }
 
     // User must enter correct password before being able to update.
     const match = await bcrypt.compare(req.body.password, req.user.password);
@@ -175,7 +181,9 @@ exports.account_update = [
     .isLength({ max: 20 })
     .withMessage("Last name must be less than 20 characters"),
   asyncHandler(async (req, res) => {
-    validate(req);
+    if (!validate(req, res)) {
+      return;
+    }
 
     const updated_user = new User({
       username: req.body.username,

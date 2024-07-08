@@ -3,7 +3,7 @@ const { validationResult } = require("express-validator");
 
 exports.userAuth = passport.authenticate("jwt", { session: false });
 
-exports.validate = (req) => {
+exports.validate = (req, res) => {
   const errors = validationResult(req);
 
   if (!errors.isEmpty()) {
@@ -12,5 +12,9 @@ exports.validate = (req) => {
       message: "invalid credentials",
       errors: errors,
     });
+
+    return false;
   }
+
+  return true;
 };
