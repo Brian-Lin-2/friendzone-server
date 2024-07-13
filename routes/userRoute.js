@@ -10,11 +10,7 @@ router.post("/login", isLoggedIn, userController.user_login);
 
 router.post("/signup", isLoggedIn, userController.user_signup);
 
-router.post(
-  "/friend-request/:friendId",
-  userAuth,
-  userController.send_friend_request
-);
+router.post("/friend-request", userAuth, userController.send_friend_request);
 
 router.put(
   "/friend-request/:friendId",

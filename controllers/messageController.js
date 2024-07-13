@@ -8,10 +8,20 @@ exports.get_message_history = asyncHandler(async (req, res) => {
   // This will return all messages between the user and their friend.
   const friend = await User.findById(req.params.friendId);
 
-  const history = await Message.find({
-    from: req.user,
-    to: friend,
-  });
+  const [userMessages, friendMessages] = await Promise.all([
+    Message.find({
+      from: req.user,
+      to: friend,
+    }),
+    Message.find({
+      from: friend,
+      to: req.user,
+    }),
+  ]);
+
+  const history = [...userMessages, ...friendMessages];
+
+  history.sort((a, b) => a.timestamp - b.timestamp);
 
   res.status(200).json({
     status: "success",
@@ -20,10 +30,7 @@ exports.get_message_history = asyncHandler(async (req, res) => {
 });
 
 exports.send_message = [
-  body("text").escape(),
   asyncHandler(async (req, res) => {
-    validate(req);
-
     const friend = await User.findById(req.params.friendId);
 
     const message = new Message({

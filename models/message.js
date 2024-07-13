@@ -10,8 +10,4 @@ const MessageSchema = new Schema({
   timestamp: { type: Date, default: Date.now },
 });
 
-MessageSchema.virtual("url").get(function () {
-  return `/user/${this._id}`;
-});
-
 module.exports = mongoose.model("message", MessageSchema);

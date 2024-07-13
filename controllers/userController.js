@@ -215,21 +215,39 @@ exports.account_delete = asyncHandler(async (req, res) => {
 
 exports.send_friend_request = asyncHandler(async (req, res) => {
   // Make sure request hasn't already been sent.
-  const user = await User.findById(req.params.friendId);
+  const user = await User.findOne({ username: req.body.name });
 
-  if (user.pending_requests.includes(req.user.id)) {
+  if (!user) {
     res.status(400).json({
       status: "failure",
-      message: "request already sent",
+      message: "User wasn't found.",
+    });
+
+    return;
+  }
+
+  if (user.pending_requests.includes(user._id)) {
+    res.status(400).json({
+      status: "failure",
+      message: "Request already sent.",
+    });
+
+    return;
+  }
+
+  if (user.friends.includes(user._id)) {
+    res.status(400).json({
+      status: "failure",
+      message: "User is already a friend.",
     });
 
     return;
   }
 
   await User.findByIdAndUpdate(
-    req.params.friendId,
+    user._id,
     {
-      $push: { pending_requests: req.user.id },
+      $push: { pending_requests: user._id },
     },
     { new: true }
   );
