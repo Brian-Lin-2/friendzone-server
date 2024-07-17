@@ -12,10 +12,11 @@ const options = {
 passport.use(
   new JwtStrategy(options, async (payload, done) => {
     try {
-      const user = await User.findById(payload.id);
+      const user = await User.findById(payload.id)
+        .populate("friends")
+        .populate("pending_requests");
 
       if (user) {
-        console.log(`${user.id} logged in`);
         done(null, user);
       } else {
         done(null, false);

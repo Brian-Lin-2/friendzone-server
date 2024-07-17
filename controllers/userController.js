@@ -22,6 +22,7 @@ exports.user_login = [
 
     const user = await User.findOne({ username: req.body.username })
       .populate("friends")
+      .populate("pending_requests")
       .exec();
 
     if (!user) {
@@ -117,7 +118,15 @@ exports.user_signup = [
 ];
 
 exports.change_password = [
-  body("new_password", "Password is required.")
+  body("password", "Password is required.")
+    .trim()
+    .isLength({ min: 1 })
+    .escape(),
+  body("new_password", "New password is required.")
+    .trim()
+    .isLength({ min: 1 })
+    .escape(),
+  body("confirm_password", "Confirm your password.")
     .trim()
     .isLength({ min: 1 })
     .escape(),
@@ -133,6 +142,22 @@ exports.change_password = [
       res.status(400).json({
         status: "failure",
         message: "invalid password",
+        errors: { errors: [{ msg: "Invalid password.", path: "password" }] },
+      });
+      return;
+    }
+
+    // Make sure user's password is correct.
+    if (req.body.new_password !== req.body.confirm_password) {
+      res.status(400).json({
+        status: "failure",
+        message: "passwords don't match",
+        errors: {
+          errors: [
+            { msg: "Passwords don't match.", path: "new_password" },
+            { msg: "Passwords don't match.", path: "confirm_password" },
+          ],
+        },
       });
       return;
     }
@@ -157,6 +182,7 @@ exports.change_password = [
 
       res.status(200).json({
         status: "success",
+        message: "password updated",
         user: user,
       });
     });
@@ -166,8 +192,7 @@ exports.change_password = [
 exports.account_update = [
   body("username", "Username must be between 3-20 characters.")
     .trim()
-    .isLength({ min: 3, max: 20 })
-    .escape(),
+    .isLength({ min: 3, max: 20 }),
   body("first_name")
     .trim()
     .isLength({ min: 1 })
@@ -195,9 +220,10 @@ exports.account_update = [
     const user = await User.findByIdAndUpdate(req.user._id, updated_user, {
       new: true,
     });
+
     res.status(200).json({
       status: "success",
-      message: "user successfully updated",
+      message: "User successfully updated.",
       user: user,
     });
   }),
@@ -226,7 +252,7 @@ exports.send_friend_request = asyncHandler(async (req, res) => {
     return;
   }
 
-  if (user.pending_requests.includes(user._id)) {
+  if (user.pending_requests.includes(req.user._id)) {
     res.status(400).json({
       status: "failure",
       message: "Request already sent.",
@@ -244,10 +270,19 @@ exports.send_friend_request = asyncHandler(async (req, res) => {
     return;
   }
 
+  if (user.username === req.user.username) {
+    res.status(400).json({
+      status: "failure",
+      message: "Make friends with other people, not yourself.",
+    });
+
+    return;
+  }
+
   await User.findByIdAndUpdate(
     user._id,
     {
-      $push: { pending_requests: user._id },
+      $push: { pending_requests: req.user._id },
     },
     { new: true }
   );
@@ -261,20 +296,29 @@ exports.send_friend_request = asyncHandler(async (req, res) => {
 exports.accept_friend_request = asyncHandler(async (req, res) => {
   const friendId = req.params.friendId;
 
-  if (!req.user.pending_requests.includes(friendId)) {
+  if (
+    !req.user.pending_requests.some((friend) => friend._id.equals(friendId))
+  ) {
     res.status(400).json({
       status: "failure",
-      message: "request doesn't exist",
+      message: "Request doesn't exist.",
     });
 
     return;
   }
 
   // Add user to friend list and remove from friend requests list.
-  await User.findByIdAndUpdate(req.user.id, {
-    $pull: { pending_requests: friendId },
-    $push: { friends: friendId },
-  });
+  const user = await User.findByIdAndUpdate(
+    req.user.id,
+    {
+      $pull: { pending_requests: friendId },
+      $push: { friends: friendId },
+    },
+    { new: true }
+  )
+    .populate("friends")
+    .populate("pending_requests")
+    .exec();
 
   // Also add user to the friend's friend list.
   await User.findByIdAndUpdate(friendId, {
@@ -283,7 +327,31 @@ exports.accept_friend_request = asyncHandler(async (req, res) => {
 
   res.status(200).json({
     status: "success",
-    message: "friend added",
+    message: "Friend added.",
+    user,
+  });
+});
+
+exports.decline_friend_request = asyncHandler(async (req, res) => {
+  const friendId = req.params.friendId;
+
+  console.log(req.user._id);
+
+  const user = await User.findByIdAndUpdate(
+    req.user._id,
+    {
+      $pull: { pending_requests: friendId },
+    },
+    { new: true }
+  )
+    .populate("friends")
+    .populate("pending_requests")
+    .exec();
+
+  res.status(200).json({
+    status: "success",
+    message: "Request declined.",
+    user,
   });
 });
 
@@ -300,16 +368,14 @@ exports.remove_friend = asyncHandler(async (req, res) => {
 
   res.status(200).json({
     status: "received",
-    message: "friend removed",
+    message: "Friend removed.",
   });
 });
 
 exports.get_user = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.params.id);
-
   res.status(200).json({
     status: "success",
-    message: "info retrieved",
-    user: user,
+    message: "Info retrieved.",
+    user: req.user,
   });
 });

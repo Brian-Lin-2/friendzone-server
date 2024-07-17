@@ -18,6 +18,12 @@ router.put(
   userController.accept_friend_request
 );
 
+router.delete(
+  "/friend-request/:friendId",
+  userAuth,
+  userController.decline_friend_request
+);
+
 router.put("/", userAuth, userController.account_update);
 
 router.put("/change-password", userAuth, userController.change_password);
