@@ -34,7 +34,7 @@ exports.send_message = [
     const friend = await User.findById(req.params.friendId);
 
     const message = new Message({
-      from: req.user,
+      from: req.user._id,
       to: friend,
       text: req.body.text,
     });

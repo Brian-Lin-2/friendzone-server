@@ -43,6 +43,9 @@ exports.user_login = [
       return;
     }
 
+    // Create a socket for the user.
+    require("../socket/user_events");
+
     // Create a jwt for user authorization.
     jwt.sign({ id: user._id }, process.env.JWT_KEY, (err, token) => {
       if (err) {
