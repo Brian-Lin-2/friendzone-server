@@ -49,6 +49,27 @@ exports.send_message = [
   }),
 ];
 
+exports.send_bot_message = [
+  asyncHandler(async (req, res) => {
+    const bot = await User.findOne({ username: "friendzone" });
+    const user = await User.findById(req.params.userId);
+
+    const message = new Message({
+      from: bot._id,
+      to: user._id,
+      text: req.body.text,
+    });
+
+    const sent_message = await message.save();
+
+    res.status(200).json({
+      status: "success",
+      message: "bot message sent",
+      sent_message: sent_message,
+    });
+  }),
+];
+
 exports.update_message = [
   body("text").escape(),
   asyncHandler(async (req, res) => {

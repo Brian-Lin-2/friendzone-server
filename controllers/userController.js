@@ -1,9 +1,10 @@
 const User = require("../models/user");
+const Message = require("../models/message");
 const asyncHandler = require("express-async-handler");
 const { body } = require("express-validator");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const { validate } = require("../misc/utils");
+const { validate, bot_message } = require("../misc/utils");
 require("dotenv").config();
 
 exports.user_login = [
@@ -29,6 +30,12 @@ exports.user_login = [
       res.status(400).json({
         status: "failure",
         message: "user was not found",
+        errors: [
+          {
+            path: "username",
+            msg: "User is not in the system.",
+          },
+        ],
       });
       return;
     }
@@ -39,6 +46,12 @@ exports.user_login = [
       res.status(400).json({
         status: "failure",
         message: "invalid password",
+        errors: [
+          {
+            path: "password",
+            msg: "Password is invalid.",
+          },
+        ],
       });
       return;
     }
@@ -71,6 +84,10 @@ exports.user_signup = [
     .trim()
     .isLength({ min: 1 })
     .escape(),
+  body("confirm_password", "Must confirm password.")
+    .trim()
+    .isLength({ min: 1 })
+    .escape(),
   body("first_name")
     .trim()
     .isLength({ min: 1 })
@@ -88,6 +105,21 @@ exports.user_signup = [
       return;
     }
 
+    // Make sure user's password is correct.
+    if (req.body.password !== req.body.confirm_password) {
+      res.status(400).json({
+        status: "failure",
+        message: "passwords don't match",
+        errors: {
+          errors: [
+            { msg: "Passwords don't match.", path: "password" },
+            { msg: "Passwords don't match.", path: "confirm_password" },
+          ],
+        },
+      });
+      return;
+    }
+
     bcrypt.hash(
       req.body.password,
       10,
@@ -98,21 +130,26 @@ exports.user_signup = [
             status: "failure",
             message: "password could not be encrypted",
           });
-          return;
         } else {
+          // Every user will have the friendzone bot as a friend.
+          const bot = await User.findOne({ username: "friendzone" });
+
           const user = new User({
             username: req.body.username,
             password: encrypted_password,
             first_name: req.body.first_name.toLowerCase(),
             last_name: req.body.last_name.toLowerCase(),
+            friends: [bot._id],
           });
 
           const new_user = await user.save();
 
+          bot_message(bot, new_user);
+
           res.status(201).json({
             status: "sucesss",
-            user: "user created!",
-            new_user: new_user,
+            message: "user created!",
+            user: new_user,
           });
         }
       })
@@ -233,6 +270,18 @@ exports.account_update = [
 ];
 
 exports.account_delete = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+
+  // Remove all references to this user.
+  await Promise.all([
+    User.updateMany({ friends: userId }, { $pull: { friends: userId } }),
+    User.updateMany(
+      { pending_requests: userId },
+      { $pull: { pending_requests: userId } }
+    ),
+    Message.deleteMany({ $or: [{ from: userId }, { to: userId }] }),
+  ]);
+
   const deleted_user = await User.findByIdAndDelete(req.user._id);
 
   res.status(200).json({

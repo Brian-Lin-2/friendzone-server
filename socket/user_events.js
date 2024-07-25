@@ -10,5 +10,14 @@ io.on("connection", (socket) => {
   socket.on("send message", ({ friend_id, message }) => {
     // Broadcast it back to the specific friend.
     io.to(friend_id).emit("chat message", message);
+    io.to(friend_id).emit("stop typing");
+  });
+
+  socket.on("typing", ({ friend_id }) => {
+    io.to(friend_id).emit("typing");
+  });
+
+  socket.on("disconnect", () => {
+    console.log("user disconnected");
   });
 });

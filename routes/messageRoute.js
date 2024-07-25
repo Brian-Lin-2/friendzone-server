@@ -7,6 +7,8 @@ router.get("/all/:friendId", userAuth, messageController.get_message_history);
 
 router.post("/:friendId", userAuth, messageController.send_message);
 
+router.post("/bot/:userId", messageController.send_bot_message);
+
 router.put("/:messageId", userAuth, messageController.update_message);
 
 router.delete("/:messageId", userAuth, messageController.delete_message);

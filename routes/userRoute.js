@@ -18,12 +18,6 @@ router.put(
   userController.accept_friend_request
 );
 
-router.delete(
-  "/friend-request/:friendId",
-  userAuth,
-  userController.decline_friend_request
-);
-
 router.put("/", userAuth, userController.account_update);
 
 router.put("/change-password", userAuth, userController.change_password);
@@ -31,5 +25,11 @@ router.put("/change-password", userAuth, userController.change_password);
 router.delete("/", userAuth, userController.account_delete);
 
 router.delete("/friend/:friendId", userAuth, userController.remove_friend);
+
+router.delete(
+  "/friend-request/:friendId",
+  userAuth,
+  userController.decline_friend_request
+);
 
 module.exports = router;
