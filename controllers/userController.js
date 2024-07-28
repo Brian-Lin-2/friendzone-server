@@ -291,6 +291,14 @@ exports.account_delete = asyncHandler(async (req, res) => {
   });
 });
 
+exports.get_friend_requests = asyncHandler(async (req, res) => {
+  res.status(200).json({
+    status: "success",
+    message: "Requests retrieved.",
+    friend_requests: req.user.pending_requests,
+  });
+});
+
 exports.send_friend_request = asyncHandler(async (req, res) => {
   // Make sure request hasn't already been sent.
   const user = await User.findOne({ username: req.body.name });
@@ -313,7 +321,7 @@ exports.send_friend_request = asyncHandler(async (req, res) => {
     return;
   }
 
-  if (user.friends.includes(user._id)) {
+  if (user.friends.includes(req.user._id)) {
     res.status(400).json({
       status: "failure",
       message: "User is already a friend.",
@@ -342,6 +350,7 @@ exports.send_friend_request = asyncHandler(async (req, res) => {
   res.status(200).json({
     status: "success",
     message: "request sent",
+    user,
   });
 });
 
@@ -386,8 +395,6 @@ exports.accept_friend_request = asyncHandler(async (req, res) => {
 
 exports.decline_friend_request = asyncHandler(async (req, res) => {
   const friendId = req.params.friendId;
-
-  console.log(req.user._id);
 
   const user = await User.findByIdAndUpdate(
     req.user._id,

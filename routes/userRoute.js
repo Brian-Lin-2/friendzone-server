@@ -6,6 +6,8 @@ const { isLoggedIn } = require("../misc/middleware");
 
 router.get("/", userAuth, userController.get_user);
 
+router.get("/friend-request", userAuth, userController.get_friend_requests);
+
 router.post("/login", isLoggedIn, userController.user_login);
 
 router.post("/signup", isLoggedIn, userController.user_signup);

@@ -7,14 +7,14 @@ io.on("connection", (socket) => {
 
   console.log(`${userId} connected`);
 
-  socket.on("send message", ({ friend_id, message }) => {
+  socket.on("send message", ({ user_id, friend_id, message }) => {
     // Broadcast it back to the specific friend.
-    io.to(friend_id).emit("chat message", message);
-    io.to(friend_id).emit("stop typing");
+    io.to(friend_id).emit("chat message", user_id, message);
+    io.to(friend_id).emit("stop typing", user_id);
   });
 
-  socket.on("typing", ({ friend_id }) => {
-    io.to(friend_id).emit("typing");
+  socket.on("typing", ({ user_id, friend_id }) => {
+    io.to(friend_id).emit("typing", user_id);
   });
 
   socket.on("disconnect", () => {
