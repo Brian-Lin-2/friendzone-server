@@ -30,12 +30,9 @@ exports.user_login = [
       res.status(400).json({
         status: "failure",
         message: "user was not found",
-        errors: [
-          {
-            path: "username",
-            msg: "User is not in the system.",
-          },
-        ],
+        errors: {
+          errors: [{ msg: "User is not in the system.", path: "username" }],
+        },
       });
       return;
     }
@@ -46,12 +43,9 @@ exports.user_login = [
       res.status(400).json({
         status: "failure",
         message: "invalid password",
-        errors: [
-          {
-            path: "password",
-            msg: "Password is invalid.",
-          },
-        ],
+        errors: {
+          errors: [{ msg: "Password is invalid.", path: "password" }],
+        },
       });
       return;
     }
