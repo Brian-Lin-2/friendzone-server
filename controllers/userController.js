@@ -211,10 +211,9 @@ exports.change_password = [
         return;
       }
 
-      const updated_user = new User({
+      const updated_user = {
         password: encrypted_password,
-        _id: req.user._id,
-      });
+      };
 
       const user = await User.findByIdAndUpdate(req.user._id, updated_user, {
         new: true,
@@ -250,12 +249,11 @@ exports.account_update = [
       return;
     }
 
-    const updated_user = new User({
+    const updated_user = {
       username: req.body.username,
       first_name: req.body.first_name,
       last_name: req.body.last_name,
-      _id: req.user._id,
-    });
+    };
 
     const user = await User.findByIdAndUpdate(req.user._id, updated_user, {
       new: true,
